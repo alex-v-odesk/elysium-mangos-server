@@ -439,6 +439,10 @@ inline bool IsReflectableSpell(SpellEntry const* spellInfo, Unit* caster = NULL,
       && !spellInfo->HasAttribute(SPELL_ATTR_PASSIVE) && !IsPositiveSpell(spellInfo, caster, victim);
 }
 
+bool IsTriggerAuraAllowedMultipleProc(SpellEntry const* spellInfo);
+bool IsTriggerAuraSingleProcPerCast(SpellEntry const* spellInfo);
+bool IsTriggerAuraSingleChancePerCast(SpellEntry const* spellInfo);
+
 inline bool NeedsComboPoints(SpellEntry const* spellInfo)
 {
     return (spellInfo->AttributesEx & (SPELL_ATTR_EX_REQ_TARGET_COMBO_POINTS | SPELL_ATTR_EX_REQ_COMBO_POINTS));
