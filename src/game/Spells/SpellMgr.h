@@ -579,6 +579,13 @@ enum ProcFlagsEx
     PROC_EX_NO_PERIODIC         = 0x0080000,                // Will never proc if periodic proc flag present
 };
 
+enum ProcTarget
+{
+    PROC_TARGET_SINGLE_CHANCE   = 0,                        // Can only proc once, only has a single chance to proc per cast
+    PROC_TARGET_SINGLE          = 1,                        // Can proc ONCE in a single cast, has as many chances to proc as there are targets
+    PROC_TARGET_MULTIPLE        = 2,                        // Can proc multiple times in a single cast, i.e. on each target
+};
+
 struct SpellProcEventEntry
 {
     uint32      schoolMask;

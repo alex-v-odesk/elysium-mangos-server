@@ -5173,7 +5173,7 @@ void Unit::HandleTriggers(Unit *pVictim, uint32 procExtra, uint32 amount, SpellE
         }
         // If we had any proc on the aura and it's a single proc per cast spell, add it to the triggered
         // map
-        if (anyAuraProc && triggeredAuraMap && IsTriggerAuraSingleProcPerCast(triggeredByHolder->GetSpellProto()))
+        if (anyAuraProc && triggeredAuraMap && triggeredByHolder->GetSpellProto()->GetProcTarget() == PROC_TARGET_SINGLE)
             triggeredAuraMap->insert(std::pair<uint32, bool>(triggeredByHolder->GetId(), true));
 
         // Remove charge (aura can be removed by triggers)
@@ -9314,7 +9314,7 @@ void Unit::ProcDamageAndSpellFor(bool isVictim, Unit* pTarget, uint32 procFlag, 
 
         // If the aura is only allowed a single chance per cast to proc, add it to the triggered
         // map now
-        if (!isVictim && triggeredAuraMap && IsTriggerAuraSingleChancePerCast(itr->second->GetSpellProto()))
+        if (!isVictim && triggeredAuraMap && itr->second->GetSpellProto()->GetProcTarget() == PROC_TARGET_SINGLE_CHANCE)
             triggeredAuraMap->insert(std::pair<uint32, bool>(itr->second->GetId(), true));
 
         SpellProcEventEntry const* spellProcEvent = nullptr;
