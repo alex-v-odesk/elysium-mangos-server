@@ -2017,6 +2017,7 @@ bool WorldObject::isWithinVisibilityDistanceOf(Unit const* viewer, WorldObject c
 void WorldObject::SetMap(Map * map)
 {
     MANGOS_ASSERT(map);
+    ACE_Guard<ACE_Thread_Mutex> guard(currMapLock);
     m_currMap = map;
     //lets save current map's Id/instanceId
     m_mapId = map->GetId();
@@ -2026,14 +2027,23 @@ void WorldObject::SetMap(Map * map)
     SetZoneScript();
 }
 
+Map* WorldObject::GetMap() const
+{
+    ACE_Guard<ACE_Thread_Mutex> guard(currMapLock);
+    MANGOS_ASSERT(m_currMap);
+    return m_currMap;
+}
+
 void WorldObject::ResetMap()
 {
+    ACE_Guard<ACE_Thread_Mutex> guard(currMapLock);
     m_currMap = nullptr;
     m_zoneScript = nullptr;
 }
 
 TerrainInfo const* WorldObject::GetTerrain() const
 {
+    ACE_Guard<ACE_Thread_Mutex> guard(currMapLock);
     MANGOS_ASSERT(m_currMap);
     return m_currMap->GetTerrain();
 }

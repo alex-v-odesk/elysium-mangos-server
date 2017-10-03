@@ -13409,8 +13409,15 @@ void Player::GroupEventFailHappens(uint32 questId)
         {
             Player* pGroupGuy = itr->getSource();
             
-            // Fail regardless of distance
-            if (pGroupGuy && pGroupGuy->GetQuestStatus(questId) == QUEST_STATUS_INCOMPLETE)
+            // Fail regardless of distance, but only for players in the same map
+            // We MUST restrict it to the same map as it adds some modicum of thread
+            // safety (player in another map changes map or does other quest related
+            // changes at the same time = bad). Without this, there exists a race
+            // condition where the map can be NULL in UpdateForQuestWorldObjects()
+            // and we crash.
+            // Players in the same map don't experience this, and players changing
+            // between other maps will fail the check if the map is NULL or different.
+            if (pGroupGuy && pGroupGuy->IsInMapDirect(this) && pGroupGuy->GetQuestStatus(questId) == QUEST_STATUS_INCOMPLETE)
                 pGroupGuy->FailQuest(questId);
         }
     }
@@ -18214,6 +18221,10 @@ bool Player::HasQuestForGO(int32 GOId) const
 // Not multithreaded
 void Player::UpdateForQuestWorldObjects()
 {
+    // Don't process updates if we're not in the world (map is NULL)
+    if (!IsInWorld())
+        return;
+
     uint32 count = 0;
     UpdateData upd;
     for (ObjectGuidSet::const_iterator itr = m_visibleGUIDs.begin(); itr != m_visibleGUIDs.end(); ++itr)
