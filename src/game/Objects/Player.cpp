@@ -18222,7 +18222,7 @@ bool Player::HasQuestForGO(int32 GOId) const
 void Player::UpdateForQuestWorldObjects()
 {
     // Don't process updates if we're not in the world (map is NULL)
-    if (!IsInWorld())
+    if (!IsInWorld() || !FindMap())
         return;
 
     uint32 count = 0;
