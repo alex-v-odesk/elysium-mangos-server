@@ -1328,6 +1328,20 @@ bool WorldObject::IsWithinDist2d(float x, float y, float dist2compare) const
     return distsq < maxdist * maxdist;
 }
 
+bool WorldObject::IsInMap(const WorldObject* obj) const
+{
+    // IsInWorld() is not thread safe, but FindMap() is. Technically we can
+    // have a race condition where the unit is in the world, but by the time
+    // we check the map they have been removed (eg. when checking players
+    // within the same group across maps, or checking whether the player can
+    // receive loot). Therefore, we use FindMap() rather than GetMap(), which
+    // allows the map to be null and hence not be in the same map as this
+    // object.
+    // Further note that ADDING players to a map is done synchronously in the
+    // main thread, but removing is not.
+    return IsInWorld() && obj->IsInWorld() && (FindMap() == obj->FindMap());
+}
+
 bool WorldObject::_IsWithinDist(WorldObject const* obj, float dist2compare, bool is3D) const
 {
     ASSERT(obj);

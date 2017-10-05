@@ -739,15 +739,7 @@ m_obj->m_updateTracker.Reset();
         float GetDistance2d(float x, float y) const;
         float GetDistanceZ(const WorldObject* obj) const;
         float GetDistanceSqr(float x, float y, float z) const;
-        bool IsInMap(const WorldObject* obj) const
-        {
-            return IsInWorld() && obj->IsInWorld() && (GetMap() == obj->GetMap());
-        }
-        // Check same map without asserting m_currMap is valid (allow NULL map)
-        bool IsInMapDirect(const WorldObject* obj) const
-        {
-            return IsInWorld() && obj->IsInWorld() && (FindMap() == obj->FindMap());
-        }
+        bool IsInMap(const WorldObject* obj) const;
         bool IsWithinDist3d(float x, float y, float z, float dist2compare) const;
         bool IsWithinDist2d(float x, float y, float dist2compare) const;
         bool _IsWithinDist(WorldObject const* obj, float dist2compare, bool is3D) const;

@@ -13417,7 +13417,7 @@ void Player::GroupEventFailHappens(uint32 questId)
             // and we crash.
             // Players in the same map don't experience this, and players changing
             // between other maps will fail the check if the map is NULL or different.
-            if (pGroupGuy && pGroupGuy->IsInMapDirect(this) && pGroupGuy->GetQuestStatus(questId) == QUEST_STATUS_INCOMPLETE)
+            if (pGroupGuy && pGroupGuy->IsInMap(this) && pGroupGuy->GetQuestStatus(questId) == QUEST_STATUS_INCOMPLETE)
                 pGroupGuy->FailQuest(questId);
         }
     }
