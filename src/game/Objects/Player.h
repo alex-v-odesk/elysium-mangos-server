@@ -832,6 +832,27 @@ struct AuraSaveStruct
     uint32 effIndexMask;
 };
 
+struct ScheduledTeleportData
+{
+    ScheduledTeleportData() : targetMapId(0), x(0.0f), y(0.0f), z(0.0f),
+        orientation(0.0f), options(0), recover(std::function<void()>()) {};
+
+    ScheduledTeleportData(uint32 mapid, float x, float y, float z, float o,
+        uint32 options, std::function<void()> recover)
+        : targetMapId(mapid), x(x), y(y), z(z),
+          orientation(o), options(options), recover(recover) {};
+
+    uint32 targetMapId;
+    float x;
+    float y;
+    float z;
+    float orientation;
+
+    uint32 options;
+
+    std::function<void()> recover;
+};
+
 class MANGOS_DLL_SPEC Player final: public Unit
 {
     friend class WorldSession;
@@ -860,6 +881,10 @@ class MANGOS_DLL_SPEC Player final: public Unit
         {
             return TeleportTo(loc.mapid, loc.coord_x, loc.coord_y, loc.coord_z, loc.orientation, options, recover);
         }
+
+        // _NOT_ thread-safe. Must be executed by the map manager after map updates, since we
+        // remove objects from the map
+        bool ExecuteTeleportFar(ScheduledTeleportData *data);
 
         bool TeleportToBGEntryPoint();
 

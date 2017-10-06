@@ -369,6 +369,9 @@ void MapManager::Update(uint32 diff)
     delete[] i_continentUpdateFinished;
     i_continentUpdateFinished = NULL;
 
+    // Execute far teleports after all map updates have finished
+    ExecuteDelayedPlayerTeleports();
+
     MapMapType::iterator crashedMapsIter = i_maps.begin();
     while (crashedMapsIter != i_maps.end())
     {
@@ -820,6 +823,25 @@ uint32 MapManager::GetContinentInstanceId(uint32 mapId, float x, float y, bool* 
         }
     }
     return 0;
+}
+
+void MapManager::ScheduleFarTeleport(Player *player, ScheduledTeleportData *data)
+{
+    ACE_Guard<ACE_Thread_Mutex> guard(m_scheduledFarTeleportsLock);
+    m_scheduledFarTeleports[player] = data;
+}
+
+void MapManager::ExecuteDelayedPlayerTeleports()
+{
+    std::map<Player*, ScheduledTeleportData*>::iterator iter;
+    for (iter = m_scheduledFarTeleports.begin(); iter != m_scheduledFarTeleports.end(); ++iter)
+    {
+        // Delete the scheduled teleport data so we're not leaking
+        iter->first->ExecuteTeleportFar(iter->second);
+        delete iter->second;
+    }
+
+    m_scheduledFarTeleports.clear();
 }
 
 void MapManager::ScheduleInstanceSwitch(Player* player, uint16 newInstance)
