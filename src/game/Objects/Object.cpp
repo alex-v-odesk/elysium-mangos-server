@@ -1133,7 +1133,7 @@ void Object::ExecuteDelayedActions()
 
 bool WorldObject::IsWithinLootXPDist(WorldObject const * objToLoot) const
 {
-    if (objToLoot && IsInMap(objToLoot) && objToLoot->GetMap()->IsRaid())
+    if (objToLoot && objToLoot->GetMap()->IsRaid() && IsInMap(objToLoot))
         return true;
 
     return objToLoot && IsInMap(objToLoot) && _IsWithinDist(objToLoot, sWorld.getConfig(CONFIG_FLOAT_GROUP_XP_DISTANCE) + objToLoot->m_lootAndXPRangeModifier, false);
@@ -1330,16 +1330,7 @@ bool WorldObject::IsWithinDist2d(float x, float y, float dist2compare) const
 
 bool WorldObject::IsInMap(const WorldObject* obj) const
 {
-    // IsInWorld() is not thread safe, but FindMap() is. Technically we can
-    // have a race condition where the unit is in the world, but by the time
-    // we check the map they have been removed (eg. when checking players
-    // within the same group across maps, or checking whether the player can
-    // receive loot). Therefore, we use FindMap() rather than GetMap(), which
-    // allows the map to be null and hence not be in the same map as this
-    // object.
-    // Further note that ADDING players to a map is done synchronously in the
-    // main thread, but removing is not.
-    return IsInWorld() && obj->IsInWorld() && (FindMap() == obj->FindMap());
+    return IsInWorld() && obj->IsInWorld() && (GetMap() == obj->GetMap());
 }
 
 bool WorldObject::_IsWithinDist(WorldObject const* obj, float dist2compare, bool is3D) const
@@ -2031,7 +2022,6 @@ bool WorldObject::isWithinVisibilityDistanceOf(Unit const* viewer, WorldObject c
 void WorldObject::SetMap(Map * map)
 {
     MANGOS_ASSERT(map);
-    ACE_Guard<ACE_Thread_Mutex> guard(currMapLock);
     m_currMap = map;
     //lets save current map's Id/instanceId
     m_mapId = map->GetId();
@@ -2043,21 +2033,18 @@ void WorldObject::SetMap(Map * map)
 
 Map* WorldObject::GetMap() const
 {
-    ACE_Guard<ACE_Thread_Mutex> guard(currMapLock);
     MANGOS_ASSERT(m_currMap);
     return m_currMap;
 }
 
 void WorldObject::ResetMap()
 {
-    ACE_Guard<ACE_Thread_Mutex> guard(currMapLock);
     m_currMap = nullptr;
     m_zoneScript = nullptr;
 }
 
 TerrainInfo const* WorldObject::GetTerrain() const
 {
-    ACE_Guard<ACE_Thread_Mutex> guard(currMapLock);
     MANGOS_ASSERT(m_currMap);
     return m_currMap->GetTerrain();
 }

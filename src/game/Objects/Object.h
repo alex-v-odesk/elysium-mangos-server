@@ -858,7 +858,7 @@ m_obj->m_updateTracker.Reset();
 
         void SetMap(Map * map);
         Map * GetMap() const;
-        Map * FindMap() const { ACE_Guard<ACE_Thread_Mutex> guard(currMapLock); return m_currMap; }
+        Map * FindMap() const { return m_currMap; }
 
         //used to check all object's GetMap() calls when object is not in world!
         void ResetMap();
@@ -921,7 +921,6 @@ m_obj->m_updateTracker.Reset();
         ZoneScript* m_zoneScript;
         bool m_isActiveObject;
 
-        mutable ACE_Thread_Mutex currMapLock;               // mutex acquired when looking up or changing the current map
         Map * m_currMap;                                    //current object's Map location
 
         uint32 m_mapId;                                     // object at map with map_id
