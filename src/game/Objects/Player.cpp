@@ -609,6 +609,12 @@ Player::~Player()
     // clean up player-instance binds, may unload some instance saves
     for (BoundInstancesMap::iterator itr = m_boundInstances.begin(); itr != m_boundInstances.end(); ++itr)
         itr->second.state->RemovePlayer(this);
+
+    // Cleanup delayed teleport if it was not executed before object deletion
+    // This shouldn't actually happen, but if someone does a bad we need to
+    // clean up anyway
+    sMapMgr.CancelDelayedPlayerTeleport(this);
+
     ASSERT(!m_groupInvite);
 }
 
@@ -1939,6 +1945,16 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
         // Check enter rights before map getting to avoid creating instance copy for player
         // this check not dependent from map instance copy and same for all instance copies of selected map
         if (!sMapMgr.CanPlayerEnter(mapid, this))
+            return false;
+
+        DungeonPersistentState* state = GetBoundInstanceSaveForSelfOrGroup(mapid);
+        uint32 instanceId = 0;
+        if (state)
+            instanceId = state->GetInstanceId();
+        if (mapid <= 1)
+            instanceId = sMapMgr.GetContinentInstanceId(mapid, x, y);
+        Map *map = sMapMgr.FindMap(mapid, instanceId);
+        if (map && !map->CanEnter(this))
             return false;
 
         // Far teleport to another map. We can't do this right now since it means
