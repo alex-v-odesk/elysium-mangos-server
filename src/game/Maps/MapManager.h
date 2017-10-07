@@ -182,6 +182,8 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
 
         void ScheduleFarTeleport(Player *player, ScheduledTeleportData *data);
         void ExecuteDelayedPlayerTeleports();
+        void ExecuteSingleDelayedTeleport(Player *player);
+        void CancelDelayedPlayerTeleport(Player *player);
 
         void MarkContinentUpdateFinished(int idx)
         {
@@ -235,7 +237,10 @@ class MANGOS_DLL_DECL MapManager : public MaNGOS::Singleton<MapManager, MaNGOS::
         std::map<Player*, uint16 /* new instance */> m_scheduledInstanceSwitches[LAST_CONTINENT_ID]; // 2 continents
 
         ACE_Thread_Mutex m_scheduledFarTeleportsLock;
-        std::map<Player*, ScheduledTeleportData*> m_scheduledFarTeleports;
+        typedef std::map<Player*, ScheduledTeleportData*> ScheduledTeleportMap;
+        ScheduledTeleportMap m_scheduledFarTeleports;
+
+        void ExecuteSingleDelayedTeleport(ScheduledTeleportMap::iterator iter);
 };
 
 template<typename Do>
