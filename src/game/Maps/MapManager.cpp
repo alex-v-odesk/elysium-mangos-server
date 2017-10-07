@@ -832,7 +832,7 @@ uint32 MapManager::GetContinentInstanceId(uint32 mapId, float x, float y, bool* 
 void MapManager::ScheduleFarTeleport(Player *player, ScheduledTeleportData *data)
 {
     ACE_Guard<ACE_Thread_Mutex> guard(m_scheduledFarTeleportsLock);
-    player->SetSemaphoreTeleportFar(true);
+    player->SetPendingFarTeleport(true);
     m_scheduledFarTeleports[player] = data;
 }
 
@@ -869,13 +869,24 @@ void MapManager::ExecuteSingleDelayedTeleport(ScheduledTeleportMap::iterator ite
     // Execute the teleport. If it fails, clear the semaphore
     if (!iter->first->ExecuteTeleportFar(iter->second))
         iter->first->SetSemaphoreTeleportFar(false);
+
+    iter->first->SetPendingFarTeleport(false);
+
     delete iter->second; // don't leak tele data
 }
 
 void MapManager::CancelDelayedPlayerTeleport(Player *player)
 {
     ACE_Guard<ACE_Thread_Mutex> guard(m_scheduledFarTeleportsLock);
-    m_scheduledFarTeleports.erase(player);
+    ScheduledTeleportMap::iterator iter = m_scheduledFarTeleports.find(player);
+
+    if (iter != m_scheduledFarTeleports.end())
+    {
+        iter->first->SetPendingFarTeleport(false);
+        delete iter->second;
+
+        m_scheduledFarTeleports.erase(iter);
+    }
 }
 
 void MapManager::ScheduleInstanceSwitch(Player* player, uint16 newInstance)

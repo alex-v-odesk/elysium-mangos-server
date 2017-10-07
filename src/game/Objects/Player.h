@@ -1673,11 +1673,12 @@ class MANGOS_DLL_SPEC Player final: public Unit
         void learnSkillRewardedSpells(uint32 id, uint32 value);
 
         WorldLocation& GetTeleportDest() { return m_teleport_dest; }
-        bool IsBeingTeleported() const { return mSemaphoreTeleport_Near || mSemaphoreTeleport_Far; }
+        bool IsBeingTeleported() const { return mSemaphoreTeleport_Near || mSemaphoreTeleport_Far || mPendingFarTeleport; }
         bool IsBeingTeleportedNear() const { return mSemaphoreTeleport_Near; }
         bool IsBeingTeleportedFar() const { return mSemaphoreTeleport_Far; }
         void SetSemaphoreTeleportNear(bool semphsetting);
         void SetSemaphoreTeleportFar(bool semphsetting);
+        void SetPendingFarTeleport(bool pending) { mPendingFarTeleport = pending; }
         void ProcessDelayedOperations();
 
         void CheckAreaExploreAndOutdoor(void);
@@ -2419,6 +2420,7 @@ class MANGOS_DLL_SPEC Player final: public Unit
         std::function<void()> m_teleportRecoverDelayed;
         bool mSemaphoreTeleport_Near;
         bool mSemaphoreTeleport_Far;
+        bool mPendingFarTeleport;
 
         uint32 m_DelayedOperations;
         bool m_bCanDelayTeleport;

@@ -470,6 +470,7 @@ Player::Player(WorldSession *session) : Unit(),
 
     mSemaphoreTeleport_Near = false;
     mSemaphoreTeleport_Far = false;
+    mPendingFarTeleport = false;
 
     m_DelayedOperations = 0;
     m_bCanDelayTeleport = false;
