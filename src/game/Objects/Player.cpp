@@ -2096,9 +2096,11 @@ bool Player::ExecuteTeleportFar(ScheduledTeleportData *data)
                 m_teleportRecover = wps;
             wps();
         }
+
+        return true;
     }
-    else
-        return false;
+
+    return false;
 }
 
 void Player::restorePendingTeleport()
