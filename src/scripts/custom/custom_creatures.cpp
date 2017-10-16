@@ -16,6 +16,7 @@
 
 #include "scriptPCH.h"
 #include "custom.h"
+#include "ScriptedAI.h"
 
 
 // TELEPORT NPC
@@ -548,8 +549,52 @@ bool GossipSelect_TeleportNPC(Player *player, Creature *_Creature, uint32 sender
     return true;
 }
 
+struct npc_summon_debugAI : ScriptedAI
+{
+    uint32 m_maxSummonCount = 200;
+    uint32 m_summonCount = 0;
+    Creature *m_summons[200];
+
+    npc_summon_debugAI(Creature *pCreature) : ScriptedAI(pCreature)
+    {
+        m_summonCount = 0;
+        for (int i = 0; i < m_maxSummonCount; ++i)
+            m_summons[i] = nullptr;
+
+        Reset();
+    }
+
+    void Reset() override
+    {
+        m_summonCount = 0;
+        for (int i = 0; i < m_maxSummonCount; ++i)
+        {
+            if (m_summons[i])
+                ((TemporarySummon*)m_summons[i])->UnSummon();
+
+            m_summons[i] = nullptr;
+        }
+    }
 
 
+    void JustDied(Unit* /* killer */) override
+    {
+        Reset();
+    }
+
+    void UpdateAI(uint32 diff) override
+    {
+        if (!m_creature->getVictim())
+            return;
+
+        m_summons[m_summonCount++] = m_creature->SummonCreature(12458, m_creature->GetPositionX(), m_creature->GetPositionY(), m_creature->GetPositionZ(), 0);
+    }
+};
+
+CreatureAI* GetAI_custom_summon_debug(Creature *creature)
+{
+    return new npc_summon_debugAI(creature);
+}
 
 void AddSC_custom_creatures()
 {
@@ -559,5 +604,10 @@ void AddSC_custom_creatures()
     newscript->Name = "custom_TeleportNPC";
     newscript->pGossipHello = &GossipHello_TeleportNPC;
     newscript->pGossipSelect = &GossipSelect_TeleportNPC;
+    newscript->RegisterSelf(true);
+
+    newscript = new Script;
+    newscript->Name = "custom_npc_summon_debugAI";
+    newscript->GetAI = &GetAI_custom_summon_debug;
     newscript->RegisterSelf(true);
 }
