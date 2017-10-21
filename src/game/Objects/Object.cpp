@@ -1145,7 +1145,8 @@ void WorldObject::SetLootAndXPModDist(float val)
 }
 
 WorldObject::WorldObject()
-    : m_isActiveObject(false), m_currMap(nullptr), m_mapId(0), m_InstanceId(0), m_lootAndXPRangeModifier(0)
+    : m_isActiveObject(false), m_currMap(nullptr), m_mapId(0), m_InstanceId(0), m_lootAndXPRangeModifier(0),
+      m_creatureSummonCount(0)
 {
     // Phasing
     worldMask = WORLD_DEFAULT_OBJECT;
@@ -2083,6 +2084,14 @@ Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, floa
         return nullptr;
     }
 
+    if (m_creatureSummonCount >= sWorld.GetCreatureSummonCountLimit())
+    {
+        sLog.outInfo("WorldObject::SummonCreature: %s in (map %u, instance %u) attempted to summon Creature (Entry: %u), but already has %u active summons",
+            GetGuidStr().c_str(), GetMapId(), GetInstanceId(), id, m_creatureSummonCount);
+
+        return nullptr;
+    }
+
     TemporarySummon* pCreature = new TemporarySummon(GetObjectGuid());
 
     Team team = TEAM_NONE;
@@ -2111,6 +2120,8 @@ Creature* WorldObject::SummonCreature(uint32 id, float x, float y, float z, floa
         ((Creature*)this)->AI()->JustSummoned(pCreature);
     pCreature->SetWorldMask(GetWorldMask());
     // return the creature therewith the summoner has access to it
+
+    ++m_creatureSummonCount;
     return pCreature;
 }
 // Nostalrius
