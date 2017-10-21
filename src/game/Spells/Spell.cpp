@@ -3809,13 +3809,18 @@ void Spell::update(uint32 difftime)
 
                 // Must update target holder since the target will not update it. Used to keep it in sync
                 // If the cast is interrupted mid-iteration (i.e. unit dies), break
-                SpellAuraHolderList::iterator iter = m_channeledHolders.begin();
+                // Note that we cannot ensure that only 1 aura holder is removed from the list at a time
+                // during iteration, since some creature scripts force all summoned adds to despawn on
+                // death, which means that multiple units will have their auras removed at once.
+                m_channeledUpdateIterator = m_channeledHolders.begin();
                 SpellAuraHolderList::iterator curr;
-                while (iter != m_channeledHolders.end())
+                while (m_channeledUpdateIterator != m_channeledHolders.end())
                 {
-                    // increment now, current holder may be removed from the list externally so we need to step
-                    curr = iter;
-                    ++iter;
+                    // Store current and increment, since m_channeledUpdateIterator
+                    // may be changed externally but we still need a way to step in
+                    // this loop
+                    curr = m_channeledUpdateIterator;
+                    ++m_channeledUpdateIterator;
 
                     SpellAuraHolder *holder = *curr;
                     // Holder deleted before updating, but not removed from list. Clear usage
@@ -4905,9 +4910,19 @@ void Spell::RemoveChanneledAuraHolder(SpellAuraHolder *holder, AuraRemoveMode mo
     SpellAuraHolderList::iterator iter = m_channeledHolders.begin();
     while (iter != m_channeledHolders.end())
     {
-        if (*iter == holder)
+        SpellAuraHolder *existing = *iter;
+        if (existing == holder)
         {
-            (*iter)->SetInUse(false);
+            existing->SetInUse(false);
+
+            // If removing the aura currently being updated, increment the
+            // update iter. If this is the last element, the update iterator
+            // will be set to end() and Spell::Update will finish. If not,
+            // it will seemlessly handle the case of multiple auras being
+            // removed in a single update.
+            if (iter == m_channeledUpdateIterator)
+                ++m_channeledUpdateIterator;
+
             m_channeledHolders.erase(iter);
             break;
         }
