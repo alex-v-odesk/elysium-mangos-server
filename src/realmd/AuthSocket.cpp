@@ -393,20 +393,51 @@ bool AuthSocket::_HandleLogonChallenge()
     pkt << (uint8) CMD_AUTH_LOGON_CHALLENGE;
     pkt << (uint8) 0x00;
 
+    // Whether to continue handling the logon after prechecks or not
+    bool handle_logon = true;
+
     ///- Verify that this IP is not in the ip_banned table
     // No SQL injection possible (paste the IP address as passed by the socket)
     std::string address = get_remote_address();
     LoginDatabase.escape_string(address);
+
     QueryResult *result = LoginDatabase.PQuery("SELECT unbandate FROM ip_banned WHERE "
-    //    permanent                    still banned
+        //    permanent                    still banned
         "(unbandate = bandate OR unbandate > UNIX_TIMESTAMP()) AND ip = '%s'", address.c_str());
     if (result)
     {
         pkt << (uint8)WOW_FAIL_DB_BUSY;
         BASIC_LOG("[AuthChallenge] Banned ip %s tries to login!", get_remote_address().c_str());
         delete result;
+
+        handle_logon = false;
     }
-    else
+
+    // Throttle the number of successful connections to different accounts from
+    // a single IP within a certain timeframe
+    int throttleCount = sConfig.GetIntDefault("LoginThrottleCount", 0);
+    int throttleDuration = sConfig.GetIntDefault("LoginThrottleDuration", 300); // default throttle within last 5 mins
+    if (handle_logon && throttleCount > 0)
+    {
+        result = LoginDatabase.PQuery("SELECT COUNT(id) FROM account WHERE last_ip = '%s' AND last_login > NOW() - '%d'", address.c_str(), throttleDuration);
+        if (result)
+        {
+            int connections = result->Fetch()[0].GetInt32() + 1; // Include this connection in the throttle?
+
+            if (connections >= throttleCount)
+            {
+                pkt << (uint8)WOW_FAIL_DB_BUSY;
+                BASIC_LOG("[AuthChallenge] Too many successful login attempts from '%s' (%d) within last %d seconds (limit %d)",
+                    address.c_str(), connections, throttleDuration, throttleCount);
+
+                handle_logon = false;
+            }
+
+            delete result;
+        }
+    }
+
+    if (handle_logon)
     {
         ///- Get the account details from the account table
         // No SQL injection (escaped user name)
